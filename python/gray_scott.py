@@ -31,7 +31,8 @@ class GrayScott:
                  initial_condition='trefethen',
                  second_order=False,
                  movie=False,
-                 outdir='.'):
+                 outdir='.',
+                 save_to_arr=False):
         """
         Constructor.
         The domain is a square.
@@ -50,10 +51,12 @@ class GrayScott:
             second_order: use Heun's method (2nd-order Runge-Kutta)
             movie: create a movie
             outdir: output directory
+            save_to_arr: save results as array
         """
         # parameter
         self.F = F
         self.kappa = kappa
+        self.N = N
 
         Nnodes = N + 1
         self.Fo = Fo
@@ -65,6 +68,8 @@ class GrayScott:
         self.outdir = outdir
         self.dump_count = 0
         self.second_order = second_order
+        self.save_to_arr = save_to_arr
+        self.arr_count = 0
 
         # grid spacing
         L = x1 - x0
@@ -99,7 +104,7 @@ class GrayScott:
         self.update_ghosts(self.u)
         self.update_ghosts(self.v)
 
-    def integrate(self, t0, t1, *, dump_freq=100, report=50):
+    def integrate(self, t0, t1, *, dump_freq=100, report=50, store_freq = 100):
         """
         Integrate system.
 
@@ -108,14 +113,22 @@ class GrayScott:
             r1: end time
             dump_freq: dump frequency in steps
             report: stdout report frequency
+            store_freq: number of time steps in output array
         """
         t = t0
         s = 0
+        if self.save_to_arr:
+            N_t = int(((t1 - t0) / self.dt) // store_freq)
+            arr = np.zeros((self.N + 1, self.N + 1, N_t))
         while t < t1:
             if s % dump_freq == 0:
                 self._dump(s, t)
             if s % report == 0:
                 print(f"step={s}; time={t:e}")
+            if self.save_to_arr and s % store_freq == 0 and self.arr_count < N_t:
+                arr[:, :, self.arr_count] = self.v[1:-1, 1:-1]
+                print(self.arr_count)
+                self.arr_count += 1
             t = self.update(time=t)
             if (t1 - t) < self.dt:
                 self.dt = t1 - t
@@ -123,6 +136,9 @@ class GrayScott:
 
         if self.movie:
             self._render_frames()
+        
+        if self.save_to_arr:
+            return arr
 
 
     def update(self, *, time=0):

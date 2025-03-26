@@ -4,6 +4,7 @@
 # Description: Gray-Scott driver.  Use the --help argument for all options
 # Copyright 2021 ETH Zurich. All Rights Reserved.
 import argparse
+import numpy as np
 
 # the file gray_scott.py must be in the PYTHONPATH or in the current directory
 from gray_scott import GrayScott
@@ -21,6 +22,8 @@ def parse_args():
     parser.add_argument('--demo', action='store_true', help='Run demo (https://www.chebfun.org/examples/pde/GrayScott.html)')
     parser.add_argument('--movie', action='store_true', help='Create a movie (requires ffmpeg)')
     parser.add_argument('--outdir', default='.', type=str, help='Output directory')
+    parser.add_argument('--save_to_arr', default=False, type=bool, help='Save results to array')
+    parser.add_argument('--store_freq', default=100, type=int, help='Number of time steps to save')
     return parser.parse_known_args()
 
 
@@ -46,9 +49,12 @@ def main():
         demo(args)
         return
 
-    gs = GrayScott(F=args.feed_rate, kappa=args.death_rate, movie=args.movie, outdir=args.outdir)
-    gs.integrate(0, args.end_time, dump_freq=args.dump_freq)
-
+    gs = GrayScott(F=args.feed_rate, kappa=args.death_rate, 
+                   movie=args.movie, outdir=args.outdir, save_to_arr=args.save_to_arr)
+    arr = gs.integrate(0, args.end_time, dump_freq=args.dump_freq, store_freq=args.store_freq)
+    print(arr)
+    np.save('test_arr.npy', arr)
+    
 
 if __name__ == "__main__":
     main()
