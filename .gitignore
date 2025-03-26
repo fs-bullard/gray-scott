@@ -4,5 +4,5 @@ demo*
 *.gif
 *.png
 *.html
-
+*.npy
 results/
